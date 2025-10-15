@@ -1,21 +1,24 @@
 {
   "name": "nasa-project-api",
   "version": "1.0.0",
-  "description": "NASA Mission Control API",
+  "description": "",
   "main": "src/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "watch": "nodemon server.js",
-    "start": "PORT=3001 node server.js"
+    "start": "cross-env PORT=3001 node src/server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
-    "express": "^5.1.0"
+    "cors": "^2.8.5",
+    "csv-parse": "^6.1.0",
+    "express": "^5.1.0",
+    "morgan": "^1.10.1"
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
     "nodemon": "^3.1.10"
   }
 }
