@@ -7,7 +7,7 @@ const launch = {
     mission: 'Kepler Exploration X', // name
     rocket: 'Explorer IS1', // rocket.name
     launchDate: new Date('December 27, 2030'), // date_local
-    destination: 'Kepler-442 b', 
+    target: 'Kepler-442 b', 
     customers: ['ZTM', 'NASA'], // payload.customers for each payload
     upcoming: true, // upcoming
     success: true, // success
@@ -25,6 +25,9 @@ function addNewLaunchFromDb(launch) {
         success: true,
         flightNumber: latestFlightNumber,
     });
+
+    // Save the launch to the Map
+    launches.set(launch.flightNumber, launch);
 }
 
 module.exports = {
