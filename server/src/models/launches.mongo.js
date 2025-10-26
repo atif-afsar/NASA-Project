@@ -13,3 +13,5 @@ const launchSchema = new mongoose.Schema({
   upcoming: { type: Boolean, required: true },
   success: { type: Boolean, required: true, default: true },
 });
+
+module.exports = mongoose.model("Launch", launchSchema);
