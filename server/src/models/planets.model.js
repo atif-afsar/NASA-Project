@@ -1,87 +1,74 @@
 const fs = require("fs");
 const path = require("path");
 const { parse } = require("csv-parse");
-const planets = require("./planets.mongo");
+const Planet = require("./planets.mongo"); // your Mongoose model
 
-// 🟢 Function to check whether a planet is habitable
+// ✅ Check if a planet is habitable
 function isHabitablePlanet(planet) {
-  // ✅ Convert values from string → number before comparing
-  const insol = Number(planet["koi_insol"]);
-  const prad = Number(planet["koi_prad"]);
-
   return (
     planet["koi_disposition"] === "CONFIRMED" &&
-    insol > 0.36 &&
-    insol < 1.11 &&
-    prad < 1.6
+    planet["koi_insol"] > 0.36 &&
+    planet["koi_insol"] < 1.11 &&
+    planet["koi_prad"] < 1.6
   );
 }
 
-// 🟢 Load data from kepler_data.csv into MongoDB
-function loadPlanetsData() {
-  return new Promise((resolve, reject) => {
-    fs.createReadStream(
-      path.join(__dirname, "..", "..", "src", "data", "kepler_data.csv")
-    )
-      .pipe(
-        parse({
-          comment: "#", // Ignore comment lines in CSV
-          columns: true, // Use headers as object keys
-        })
-      )
-      .on("data", async (data) => {
-        if (isHabitablePlanet(data)) {
-          // ✅ Await here ensures proper async flow and avoids race conditions
-          await savePlanet(data);
-        }
-      })
-      .on("error", (err) => {
-        console.error("❌ Error reading CSV file:", err);
-        reject(err);
-      })
-      .on("end", async () => {
-        // ✅ Fetch all planets once file is completely parsed
-        const all = await getAllPlanets();
-
-        // ✅ Filter out any undefined entries for safety
-        const planetNames = all
-          .map((p) => p.keplerName)
-          .filter((name) => !!name);
-
-        console.log(planetNames);
-        console.log(`${planetNames.length} habitable planets found!`);
-        resolve();
-      });
-  });
-}
-
-// 🟢 Fetch all planets (clean output, hides internal Mongo fields)
-async function getAllPlanets() {
-  return await planets.find({}, { _id: 0, __v: 0 });
-}
-
-// 🟢 Save planet to MongoDB (insert or update existing)
+// 🟢 Save or update planet in MongoDB
 async function savePlanet(planet) {
   try {
-    // ✅ Skip invalid entries (no kepler_name)
-    if (!planet.kepler_name || planet.kepler_name.trim() === "") return;
+    if (!planet.kepler_name) return; // skip invalid rows
 
-    await planets.updateOne(
-      { keplerName: planet.kepler_name }, // find by planet name
-      {
-        // ✅ Use $set to avoid overwriting entire doc
-        $set: {
+    await Planet.updateOne(
+      { keplerName: planet.kepler_name }, // unique filter
+      { 
+        $set: { 
           keplerName: planet.kepler_name,
           koi_disposition: planet.koi_disposition,
-          koi_insol: Number(planet.koi_insol),
-          koi_prad: Number(planet.koi_prad),
-        },
+          koi_insol: planet.koi_insol,
+          koi_prad: planet.koi_prad
+        } 
       },
-      { upsert: true } // create if doesn't exist
+      { upsert: true } // insert if not exists
     );
   } catch (err) {
     console.error(`❌ Could not save planet ${planet.kepler_name}:`, err);
   }
+}
+
+// 🟢 Get all planets from database
+async function getAllPlanets() {
+  return await Planet.find({}, { _id: 0, __v: 0 });
+}
+
+// 🟢 Load planets from CSV and save to MongoDB
+function loadPlanetsData() {
+  return new Promise((resolve, reject) => {
+    const savePromises = [];
+
+    fs.createReadStream(
+      path.join(__dirname, "..", "data", "kepler_data.csv")
+    )
+      .pipe(
+        parse({
+          comment: "#",
+          columns: true,
+        })
+      )
+      .on("data", (data) => {
+        if (isHabitablePlanet(data)) {
+          console.log(`Found habitable planet: ${data.kepler_name}`);
+          savePromises.push(savePlanet(data)); // store promise
+        }
+      })
+      .on("error", (err) => reject(err))
+      .on("end", async () => {
+        await Promise.all(savePromises); // wait for all saves to complete
+        const all = await getAllPlanets();
+        console.log(all.map((p) => p.keplerName));
+        console.log(`✅ ${all.length} habitable planets saved to MongoDB`);
+        resolve();
+      });
+  });
 }
 
 module.exports = {

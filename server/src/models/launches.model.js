@@ -1,7 +1,12 @@
 const launchesDatabase = require('../models/launches.mongo');
 
-// Keep track of latest flight number
-let latestFlightNumber = 100;
+// Get latest flight number from database
+async function getLatestFlightNumber() {
+  const latestLaunch = await launchesDatabase
+    .findOne()
+    .sort('-flightNumber');
+  return latestLaunch ? latestLaunch.flightNumber : 100;
+}
 
 // Default launch (used to initialize collection)
 const launch = {
@@ -37,8 +42,8 @@ async function getAllLaunchesFromDb() {
 
 // 🟢 Add new launch
 async function addNewLaunchFromDb(launch) {
-  latestFlightNumber++;
-
+  const latestFlightNumber = await getLatestFlightNumber();
+  
   // ✅ Ensure launch date is converted to a real Date object
   const launchDate = new Date(launch.launchDate);
   if (isNaN(launchDate)) {
@@ -50,7 +55,7 @@ async function addNewLaunchFromDb(launch) {
     upcoming: true,
     customers: ['ZTM', 'Mastery', 'NASA'],
     success: true,
-    flightNumber: latestFlightNumber,
+    flightNumber: latestFlightNumber + 1,
     launchDate, // ✅ ensure correct date type
   };
 

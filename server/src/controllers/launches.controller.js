@@ -1,16 +1,17 @@
-const {launches, getAllLaunchesFromDb, addNewLaunchFromDb} = require('../models/launches.model');
+const { getAllLaunchesFromDb, addNewLaunchFromDb, saveLaunch } = require('../models/launches.model');
+const launchesDatabase = require('../models/launches.mongo');
 
-function existsLaunchWithId(launchId) {
-    return launches.has(launchId);
+async function existsLaunchWithId(launchId) {
+    return await launchesDatabase.findOne({ flightNumber: launchId });
 }
 
-function getAllLaunches(req, res) {
-
-   return res.status(200).json(getAllLaunchesFromDb());
+async function getAllLaunches(req, res) {
+    const launches = await getAllLaunchesFromDb();
+    return res.status(200).json(launches);
 }
 
-function addNewLaunch(req, res) {
-  const launch = req.body;
+async function addNewLaunch(req, res) {
+    const launch = req.body;
 
   // 🧩 Validate required fields first
   if (!launch.mission || !launch.rocket || !launch.launchDate || !launch.target) {
@@ -27,30 +28,40 @@ function addNewLaunch(req, res) {
     });
   }
 
-  // ✅ Save to database / model
-  addNewLaunchFromDb(launch);
+  try {
+    // ✅ Save to database / model
+    const newLaunch = await addNewLaunchFromDb(launch);
 
-  // 🚀 Send success response
-  return res.status(201).json(launch);
+    // 🚀 Send success response
+    return res.status(201).json(newLaunch);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
 }
 
-function abortLaunch(req, res) {
+async function abortLaunch(req, res) {
     const launchId = Number(req.params.id);
 
-    if (!existsLaunchWithId(launchId)) {
+    const existingLaunch = await existsLaunchWithId(launchId);
+    if (!existingLaunch) {
         return res.status(404).json({
             error: 'Launch not found',
         });
     }
 
-    const aborted = abortLaunchById(launchId);
-   return res.status(200).json(aborted);
+    const aborted = await abortLaunchById(launchId);
+    return res.status(200).json(aborted);
 }
 
-function abortLaunchById(launchId) {
-    const aborted = launches.get(launchId);
-    aborted.upcoming = false;
-    aborted.success = false;
+async function abortLaunchById(launchId) {
+    const aborted = await launchesDatabase.findOneAndUpdate(
+        { flightNumber: launchId },
+        {
+            upcoming: false,
+            success: false
+        },
+        { new: true }
+    );
     return aborted;
 }
 
