@@ -62,7 +62,7 @@ async function abortLaunchById(launchId) {
         },
         { new: true }
     );
-    return aborted;
+    return aborted.ok === 1 && aborted.nModified === 1;
 }
 
 module.exports = {

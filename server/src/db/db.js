@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+dotenv.config();
 
 const connectToDatabase = async () => {
   try {
@@ -9,4 +11,8 @@ const connectToDatabase = async () => {
   }
 };
 
-module.exports = connectToDatabase;
+async function disconnectFromDatabase() {
+ await mongoose.disconnect();
+}
+
+module.exports ={ connectToDatabase, disconnectFromDatabase };
