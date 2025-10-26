@@ -1,4 +1,5 @@
 const launchesDatabase = require('../models/launches.mongo');
+const planetsMongo = require('./planets.mongo');
 
 // Get latest flight number from database
 async function getLatestFlightNumber() {
@@ -17,11 +18,16 @@ const launch = {
   target: 'Kepler-442 b',
   customers: ['ZTM', 'NASA'],
   upcoming: true,
-  success: true,
+  success: true, 
 };
 
 // 🟢 Save launch to MongoDB (insert or update existing)
 async function saveLaunch(launch) {
+  const planet = await planetsMongo.findOne({ keplerName: launch.target });  
+
+  if (!planet) {
+    throw new Error('No matching planet found');
+  }
   try {
     // ✅ Using $set ensures only specific fields are updated, not the entire doc
     await launchesDatabase.updateOne(
