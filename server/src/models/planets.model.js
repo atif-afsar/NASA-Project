@@ -56,7 +56,7 @@ function loadPlanetsData() {
       )
       .on("data", (data) => {
         if (isHabitablePlanet(data)) {
-          console.log(`Found habitable planet: ${data.kepler_name}`);
+        
           savePromises.push(savePlanet(data)); // store promise
         }
       })
@@ -64,7 +64,6 @@ function loadPlanetsData() {
       .on("end", async () => {
         await Promise.all(savePromises); // wait for all saves to complete
         const all = await getAllPlanets();
-        console.log(all.map((p) => p.keplerName));
         console.log(`✅ ${all.length} habitable planets saved to MongoDB`);
         resolve();
       });
