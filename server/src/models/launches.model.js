@@ -1,3 +1,4 @@
+const axios = require('axios');
 const launchesDatabase = require('../models/launches.mongo');
 const planetsMongo = require('./planets.mongo');
 
@@ -11,8 +12,8 @@ async function getLatestFlightNumber() {
 
 // Default launch (used to initialize collection)
 const launch = {
-  flightNumber: 100,
-  mission: 'Kepler Exploration X',
+  flightNumber: 100, //flight_number
+  mission: 'Kepler Exploration X', //name
   rocket: 'Explorer IS1',
   launchDate: new Date('December 27, 2030'),
   target: 'Kepler-442 b',
@@ -37,6 +38,49 @@ async function saveLaunch(launch) {
     );
   } catch (err) {
     console.error(`❌ Could not save launch ${launch.flightNumber}:`, err);
+  }
+}
+const SPACEX_API_URL = 'https://api.spacexdata.com/v4/launches/query';
+async function loadLaunchesData(){
+  console.log('Downloading Launch Data ');
+  const response = await axios.post(SPACEX_API_URL, {
+    
+    query: {},
+    options: {
+      pagination: false,
+      populate: [
+        {
+          path: 'rocket',
+          select: {
+            name: 1,
+          },
+        },
+        {
+          path: 'payloads',
+          select: {
+            customers: 1,
+          },
+        },
+      ],
+    },
+  })
+  const launchesDocs= response.data.docs
+  for(const launchDoc of launchesDocs){
+    const payloads = launchDoc['payloads']
+    const customers = payloads.flatMap((payload) => {
+      return payload['customers']
+    })
+    const launch = {
+      flightNumber: launchDoc['flight_number'],
+      mission: launchDoc['name'],
+      rocket: launchDoc['rocket']['name'],
+      launchDate: launchDoc['date_local'],
+      upcoming: launchDoc['upcoming'],
+      success: launchDoc['success'],
+      customers,
+    }
+    console.log(`Launch: ${launch.flightNumber} ${launch.mission}`)
+    // await saveLaunch(launch)
   }
 }
 
@@ -68,6 +112,8 @@ async function addNewLaunchFromDb(launch) {
   await saveLaunch(newLaunch);
   return newLaunch; // ✅ return for confirmation or API response
 }
+ 
+
 
 // 🟢 Initialize default launch if database is empty
 async function initializeDefaultLaunch() {
@@ -79,6 +125,7 @@ async function initializeDefaultLaunch() {
 }
 
 module.exports = {
+  loadLaunchesData,
   getAllLaunchesFromDb,
   addNewLaunchFromDb,
   saveLaunch,
