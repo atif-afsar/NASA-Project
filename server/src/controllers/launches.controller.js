@@ -1,12 +1,14 @@
 const { getAllLaunchesFromDb, addNewLaunchFromDb, saveLaunch } = require('../models/launches.model');
 const launchesDatabase = require('../models/launches.mongo');
+const {getPagination} = require('../services/query');
 
 async function existsLaunchWithId(launchId) {
     return await launchesDatabase.findOne({ flightNumber: launchId });
 }
 
 async function getAllLaunches(req, res) {
-    const launches = await getAllLaunchesFromDb();
+   const {skip, limit} = getPagination(req.query)
+    const launches = await getAllLaunchesFromDb(skip, limit);
     return res.status(200).json(launches);
 }
 

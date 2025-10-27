@@ -2,9 +2,8 @@ const dotenv = require('dotenv');
 dotenv.config();
 const app = require('./app');
 const { loadPlanetsData } = require('./models/planets.model');
-const { loadLaunchesData } = require('./models/launches.model');
 const  {connectToDatabase}  = require('./db/db');
-const { initializeDefaultLaunch } = require('./models/launches.model');
+const { initializeDefaultLaunch, loadLaunchesData } = require('./models/launches.model');
 const PORT = process.env.PORT || 8000;
 async function startServer() {
   await connectToDatabase(); // connect to MongoDB
