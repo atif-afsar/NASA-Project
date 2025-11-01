@@ -17,6 +17,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-      - run: npm install
-      - run: npm run build --prefix client
-         
+
+      - name: Install dependencies
+        run: npm install --prefix client
+       
+      - name: Debug folder structure
+        run: ls -R
+
+      - name: Build project
+        run: npm run build --prefix client
