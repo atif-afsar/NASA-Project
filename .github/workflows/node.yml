@@ -16,14 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: "npm"
-
-      - name: Install root dependencies
-        run: npm install
-
-      - name: Install client dependencies
-        run: npm install --prefix client
-
-      - name: Build client project
-        run: npm run build --prefix client
+          node-version: '18'
+      - run: npm install
+      - run: npm run build --prefix client
+         
