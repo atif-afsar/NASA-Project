@@ -2,13 +2,14 @@ name: NASA Project CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -16,13 +17,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: 'npm'
+          cache: "npm"
 
-      - name: Install dependencies (root, server, client)
+      - name: Install root dependencies
         run: npm install
-
-      - name: Install server dependencies
-        run: npm install --prefix server
 
       - name: Install client dependencies
         run: npm install --prefix client
