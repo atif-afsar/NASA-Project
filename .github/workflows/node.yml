@@ -8,15 +8,20 @@ on:
 
 jobs:
   build:
+    env:
+      CI: true
+    strategy:
+      matrix:
+        node-version: [16.x,18.x]
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ matrix.node-version }}
 
       - name: Install root dependencies
         run: npm install
@@ -32,3 +37,6 @@ jobs:
 
       - name: Verify build output
         run: ls -R client || echo "❌ Build folder missing!"
+
+      - name: Run tests
+        run: npm test
